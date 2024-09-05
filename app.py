@@ -1,9 +1,10 @@
-from flask import Flask, jsonify, request
 import base64
 import hmac
 import hashlib
 import requests
 import json
+import os
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
@@ -65,11 +66,9 @@ def create_payment():
     else:
         return jsonify(res)
 
+# Uygulamanın çalışması için gerekli port ve başlatma ayarı
 if __name__ == '__main__':
-    app.run(debug=True)
-
-import os
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Render'da atanmış PORT değerini al, yoksa 5000 kullan
-    app.run(host="0.0.0.0", port=port)  # 0.0.0.0 tüm dış bağlantılara açık olacak şekilde ayarlanır
+    # Render'de belirtilen portu al
+    port = int(os.environ.get('PORT', 5000))
+    # 0.0.0.0 üzerinde çalıştır, böylece dışarıdan erişilebilir olsun
+    app.run(host='0.0.0.0', port=port, debug=True)
