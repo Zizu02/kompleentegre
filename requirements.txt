@@ -5,3 +5,4 @@ itsdangerous==2.0.0
 Click==8.0.0
 requests==2.25.1
 MarkupSafe==2.0.1
+flask-cors
