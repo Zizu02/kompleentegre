@@ -48,12 +48,11 @@ def create_payment():
     user_name = data.get('user_name')
     user_address = data.get('user_address')
     user_phone = data.get('user_phone')
-    merchant_oid = "order_" + str(int(time.time()))  # Sipariş numarasını zaman damgasına göre benzersiz yap
+    merchant_oid = "order_" + str(int(time.time()))  # Benzersiz sipariş numarası
 
-    
     # Sepet içeriği
     user_basket = base64.b64encode(json.dumps([['Ürün Adı', payment_amount, 1]]).encode())
-    
+
     # PayTR için gerekli parametreler
     params = {
         'merchant_id': MERCHANT_ID,
@@ -80,10 +79,21 @@ def create_payment():
         'test_mode': '1'
     }
 
+    # Gönderilen isteği logla
+    print("Gönderilen İstek:", params)
+
     # PayTR'ye istek gönder
-response = requests.post('https://www.paytr.com/odeme/api/get-token', data=params)
-print("Gönderilen İstek:", params)  # Bu satırı ekle
-print("Gelen Yanıt:", response.text)  # Bu satırı ekle
+    response = requests.post('https://www.paytr.com/odeme/api/get-token', data=params)
+    
+    # Gelen yanıtı logla
+    print("Gelen Yanıt:", response.text)
+
+    res = json.loads(response.text)
+
+    if res['status'] == 'success':
+        return jsonify({'token': res['token']})
+    else:
+        return jsonify(res)
 
     
     res = json.loads(response.text)
