@@ -41,19 +41,14 @@ def create_paytr_token(merchant_id, merchant_key, merchant_salt, user_ip, mercha
 def create_payment():
     data = request.json
     email = data.get('email')
-    payment_amount = data.get('payment_amount')  # Bu kuruş cinsinden olacak, örn: 3456 kuruş
+    payment_amount = data.get('payment_amount')
     user_name = data.get('user_name')
     user_address = data.get('user_address')
     user_phone = data.get('user_phone')
     merchant_oid = data.get('merchant_oid')
     
     # Sepet içeriği
-    user_basket = [
-        ['Ürün Adı', str(payment_amount), '1']  # Tutar kuruş cinsinden olmalı
-    ]
-    
-    # Sepeti base64 formatına çevir
-    user_basket_encoded = base64.b64encode(json.dumps(user_basket).encode()).decode('utf-8')
+    user_basket = base64.b64encode(json.dumps([['Ürün Adı', payment_amount, 1]]).encode())
     
     # PayTR için gerekli parametreler
     params = {
@@ -61,13 +56,13 @@ def create_payment():
         'user_ip': request.remote_addr,
         'merchant_oid': merchant_oid,
         'email': email,
-        'payment_amount': payment_amount,  # Sepet tutarı kuruş cinsinden
+        'payment_amount': payment_amount,
         'paytr_token': create_paytr_token(
             MERCHANT_ID, MERCHANT_KEY, MERCHANT_SALT,
             request.remote_addr, merchant_oid, email, payment_amount,
-            user_basket_encoded, '0', '12', 'TL', '1'
+            user_basket, '0', '12', 'TL', '1'
         ),
-        'user_basket': user_basket_encoded,  # Base64 formatında sepet bilgisi
+        'user_basket': user_basket,
         'debug_on': '1',
         'no_installment': '0',
         'max_installment': '12',
@@ -81,11 +76,16 @@ def create_payment():
         'test_mode': '1'
     }
 
+    # İstek gönderilmeden önce verileri yazdırın
+    print("Gönderilen İstek:", params)
+
     # PayTR'ye istek gönder
     response = requests.post('https://www.paytr.com/odeme/api/get-token', data=params)
+    
+    # Yanıtı yazdırın
+    print("Gelen Yanıt:", response.text)
+    
     res = json.loads(response.text)
-
-    print("PayTR Response:", res)
 
     if res['status'] == 'success':
         return jsonify({'token': res['token']})
