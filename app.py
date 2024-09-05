@@ -1,17 +1,17 @@
+from flask import Flask, jsonify, request
 import base64
 import hmac
 import hashlib
 import requests
 import json
 import os
-from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
 # PayTR için gerekli bilgiler
-MERCHANT_ID = '492579'  # PayTR panelinden alınacak Merchant ID
-MERCHANT_KEY = b'Gxm6ww6x6hbPJmg6'  # PayTR panelinden alınacak Merchant Key
-MERCHANT_SALT = b'RbuMk9kDZ2bCa5K2'  # PayTR panelinden alınacak Merchant Salt
+MERCHANT_ID = '492579'
+MERCHANT_KEY = b'Gxm6ww6x6hbPJmg6'
+MERCHANT_SALT = b'RbuMk9kDZ2bCa5K2'
 
 # PayTR Token oluşturma
 def create_paytr_token(merchant_id, merchant_key, merchant_salt, user_ip, merchant_oid, email, payment_amount, user_basket, no_installment, max_installment, currency, test_mode):
@@ -66,9 +66,11 @@ def create_payment():
     else:
         return jsonify(res)
 
-# Uygulamanın çalışması için gerekli port ve başlatma ayarı
+# Kök URL için bir rota ekleyelim
+@app.route('/')
+def home():
+    return 'Hello, Render! Uygulama çalışıyor.'
+
 if __name__ == '__main__':
-    # Render'de belirtilen portu al
-    port = int(os.environ.get('PORT', 5000))
-    # 0.0.0.0 üzerinde çalıştır, böylece dışarıdan erişilebilir olsun
+    port = int(os.environ.get('PORT', 5000))  # Render'den gelen portu al
     app.run(host='0.0.0.0', port=port, debug=True)
