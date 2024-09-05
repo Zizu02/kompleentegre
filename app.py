@@ -41,32 +41,30 @@ def create_paytr_token(merchant_id, merchant_key, merchant_salt, user_ip, mercha
 def create_payment():
     data = request.json
     email = data.get('email')
-    payment_amount = data.get('payment_amount')  # Ödeme miktarı kuruş cinsinden gelmeli
+    payment_amount = data.get('payment_amount')
     user_name = data.get('user_name')
     user_address = data.get('user_address')
     user_phone = data.get('user_phone')
     merchant_oid = data.get('merchant_oid')
     
     # Sepet içeriği
-    user_basket = base64.b64encode(json.dumps([['Ürün Adı', payment_amount, 1]]).encode())  # Sepet içeriğini encode ediyoruz
+    user_basket = base64.b64encode(json.dumps([['Ürün Adı', payment_amount, 1]]).encode())
     
     # PayTR için gerekli parametreler
-    paytr_token = create_paytr_token(
-        MERCHANT_ID, MERCHANT_KEY, MERCHANT_SALT,
-        request.remote_addr, merchant_oid, email, payment_amount,
-        user_basket, '0', '12', 'TL', '0'  # Test modu kapalı
-    )
-
     params = {
         'merchant_id': MERCHANT_ID,
         'user_ip': request.remote_addr,
         'merchant_oid': merchant_oid,
         'email': email,
         'payment_amount': payment_amount,
-        'paytr_token': paytr_token,
+        'paytr_token': create_paytr_token(
+            MERCHANT_ID, MERCHANT_KEY, MERCHANT_SALT,
+            request.remote_addr, merchant_oid, email, payment_amount,
+            user_basket, '0', '12', 'TL', '1'
+        ),
         'user_basket': user_basket,
-        'debug_on': '1',  # Hata ayıklama modu
-        'no_installment': '0',  # Taksit yok
+        'debug_on': '1',
+        'no_installment': '0',
         'max_installment': '12',
         'user_name': user_name,
         'user_address': user_address,
@@ -75,19 +73,22 @@ def create_payment():
         'merchant_fail_url': 'https://sapphire-algae-9ajt.squarespace.com/cart',
         'timeout_limit': '30',
         'currency': 'TL',
-        'test_mode': '0'  # Canlı modda çalışıyoruz
+        'test_mode': '1'
     }
 
     # PayTR'ye istek gönder
     response = requests.post('https://www.paytr.com/odeme/api/get-token', data=params)
     res = json.loads(response.text)
-
-    print("PayTR Yanıtı:", res)  # Yanıtı gözlemleyin
+    
+    # PayTR yanıtını konsola yazdır
+    print("PayTR Response:", res)  # Yanıtı kontrol edin
 
     if res['status'] == 'success':
         return jsonify({'token': res['token']})
     else:
-        return jsonify(res)  # Hata durumunda tüm yanıtı döndür
+        return jsonify(res)
+
+
 
 # Kök URL için bir rota ekleyelim
 @app.route('/')
