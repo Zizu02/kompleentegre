@@ -76,14 +76,11 @@ def create_payment():
         'test_mode': '1'
     }
 
-    # İstek gönderilmeden önce verileri yazdırın
-    print("Gönderilen İstek:", params)
-
     # PayTR'ye istek gönder
-    response = requests.post('https://www.paytr.com/odeme/api/get-token', data=params)
-    
-    # Yanıtı yazdırın
-    print("Gelen Yanıt:", response.text)
+response = requests.post('https://www.paytr.com/odeme/api/get-token', data=params)
+print("Gönderilen İstek:", params)  # Bu satırı ekle
+print("Gelen Yanıt:", response.text)  # Bu satırı ekle
+
     
     res = json.loads(response.text)
 
