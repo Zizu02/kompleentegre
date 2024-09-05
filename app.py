@@ -5,11 +5,12 @@ import hashlib
 import requests
 import json
 import os
-import time
+import random
+import string
 from flask_cors import CORS  # CORS'ü import et
 
 app = Flask(__name__)
-CORS(app)  # Tüm kaynaklar için izin verir
+CORS(app, resources={r"/*": {"origins": "https://sapphire-algae-9ajt.squarespace.com"}})  # Belirli bir domain için CORS izni
 
 # PayTR için gerekli bilgiler
 MERCHANT_ID = '492579'
@@ -39,6 +40,9 @@ def create_paytr_token(merchant_id, merchant_key, merchant_salt, user_ip, mercha
     print(f"Generated token: {token}")
     return token
 
+def generate_merchant_oid():
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=12))
+
 @app.route('/create_payment', methods=['POST'])
 def create_payment():
     data = request.json
@@ -47,7 +51,7 @@ def create_payment():
     user_name = data.get('user_name')
     user_address = data.get('user_address')
     user_phone = data.get('user_phone')
-    merchant_oid = "order_" + str(int(time.time()))  # Benzersiz sipariş numarası
+    merchant_oid = generate_merchant_oid()  # Güncellenmiş benzersiz sipariş numarası
 
     # Sepet içeriği
     user_basket = base64.b64encode(json.dumps([['Ürün Adı', payment_amount, 1]]).encode())
@@ -93,7 +97,6 @@ def create_payment():
         return jsonify({'token': res['token']})
     else:
         return jsonify(res)
-
 
 @app.route('/paytr_callback', methods=['POST'])
 def paytr_callback():
