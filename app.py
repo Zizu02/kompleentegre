@@ -5,8 +5,10 @@ import hashlib
 import requests
 import json
 import os
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # CORS'u tüm rotalara açıyoruz
 
 # PayTR için gerekli bilgiler
 MERCHANT_ID = '492579'
