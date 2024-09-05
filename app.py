@@ -5,7 +5,7 @@ import hashlib
 import requests
 import json
 import os
-import time  # Bu satır dosyanın en başında olmalı
+import time  # Zamanı kullanarak benzersiz sipariş numarası oluşturacağız
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -29,12 +29,12 @@ def create_paytr_token(merchant_id, merchant_key, merchant_salt, user_ip, mercha
     print(f"max_installment: {max_installment}")
     print(f"currency: {currency}")
     print(f"test_mode: {test_mode}")
-    print(f"Generated token: {create_paytr_token(...)})")
 
-
+    # Hash string oluştur
     hash_str = f"{merchant_id}{user_ip}{merchant_oid}{email}{payment_amount}{user_basket.decode()}{no_installment}{max_installment}{currency}{test_mode}"
     print(f"Hash string: {hash_str}")
 
+    # Token oluşturma işlemi
     token = base64.b64encode(hmac.new(merchant_key, hash_str.encode() + merchant_salt, hashlib.sha256).digest())
     print(f"Generated token: {token}")
     return token
@@ -94,15 +94,6 @@ def create_payment():
         return jsonify({'token': res['token']})
     else:
         return jsonify(res)
-
-    
-    res = json.loads(response.text)
-
-    if res['status'] == 'success':
-        return jsonify({'token': res['token']})
-    else:
-        return jsonify(res)
-
 
 
 # PayTR'den gelen ödeme sonucunu işlemek için callback fonksiyonu
