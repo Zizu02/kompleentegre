@@ -41,14 +41,19 @@ def create_paytr_token(merchant_id, merchant_key, merchant_salt, user_ip, mercha
 def create_payment():
     data = request.json
     email = data.get('email')
-    payment_amount = data.get('payment_amount')
+    payment_amount = data.get('payment_amount')  # Bu kuruş cinsinden olacak, örn: 3456 kuruş
     user_name = data.get('user_name')
     user_address = data.get('user_address')
     user_phone = data.get('user_phone')
     merchant_oid = data.get('merchant_oid')
     
     # Sepet içeriği
-    user_basket = base64.b64encode(json.dumps([['Ürün Adı', payment_amount, 1]]).encode())
+    user_basket = [
+        ['Ürün Adı', str(payment_amount), '1']  # Tutar kuruş cinsinden olmalı
+    ]
+    
+    # Sepeti base64 formatına çevir
+    user_basket_encoded = base64.b64encode(json.dumps(user_basket).encode()).decode('utf-8')
     
     # PayTR için gerekli parametreler
     params = {
@@ -56,13 +61,13 @@ def create_payment():
         'user_ip': request.remote_addr,
         'merchant_oid': merchant_oid,
         'email': email,
-        'payment_amount': payment_amount,
+        'payment_amount': payment_amount,  # Sepet tutarı kuruş cinsinden
         'paytr_token': create_paytr_token(
             MERCHANT_ID, MERCHANT_KEY, MERCHANT_SALT,
             request.remote_addr, merchant_oid, email, payment_amount,
-            user_basket, '0', '12', 'TL', '1'
+            user_basket_encoded, '0', '12', 'TL', '1'
         ),
-        'user_basket': user_basket,
+        'user_basket': user_basket_encoded,  # Base64 formatında sepet bilgisi
         'debug_on': '1',
         'no_installment': '0',
         'max_installment': '12',
@@ -79,14 +84,14 @@ def create_payment():
     # PayTR'ye istek gönder
     response = requests.post('https://www.paytr.com/odeme/api/get-token', data=params)
     res = json.loads(response.text)
-    
-    # PayTR yanıtını konsola yazdır
-    print("PayTR Response:", res)  # Yanıtı kontrol edin
+
+    print("PayTR Response:", res)
 
     if res['status'] == 'success':
         return jsonify({'token': res['token']})
     else:
         return jsonify(res)
+
 
 
 # PayTR'den gelen ödeme sonucunu işlemek için callback fonksiyonu
