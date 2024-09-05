@@ -8,7 +8,7 @@ import os
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # CORS'u tüm rotalara açıyoruz
+CORS(app, resources={r"/*": {"origins": "https://sapphire-algae-9ajt.squarespace.com"}})  # Sadece belirli bir domain için CORS izni verildi
 
 # PayTR için gerekli bilgiler
 MERCHANT_ID = '492579'
