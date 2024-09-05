@@ -5,6 +5,7 @@ import hashlib
 import requests
 import json
 import os
+import time  # Bu satır dosyanın en başında olmalı
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -28,6 +29,8 @@ def create_paytr_token(merchant_id, merchant_key, merchant_salt, user_ip, mercha
     print(f"max_installment: {max_installment}")
     print(f"currency: {currency}")
     print(f"test_mode: {test_mode}")
+    print(f"Generated token: {create_paytr_token(...)})")
+
 
     hash_str = f"{merchant_id}{user_ip}{merchant_oid}{email}{payment_amount}{user_basket.decode()}{no_installment}{max_installment}{currency}{test_mode}"
     print(f"Hash string: {hash_str}")
@@ -45,7 +48,8 @@ def create_payment():
     user_name = data.get('user_name')
     user_address = data.get('user_address')
     user_phone = data.get('user_phone')
-    merchant_oid = data.get('merchant_oid')
+    merchant_oid = "order_" + str(int(time.time()))  # Sipariş numarasını zaman damgasına göre benzersiz yap
+
     
     # Sepet içeriği
     user_basket = base64.b64encode(json.dumps([['Ürün Adı', payment_amount, 1]]).encode())
