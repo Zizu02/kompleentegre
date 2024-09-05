@@ -7,6 +7,7 @@ import json
 import os
 import random
 import string
+import re
 from flask_cors import CORS  # CORS'ü import et
 
 app = Flask(__name__)
@@ -43,6 +44,9 @@ def create_paytr_token(merchant_id, merchant_key, merchant_salt, user_ip, mercha
 def generate_merchant_oid():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=12))
 
+def validate_merchant_oid(merchant_oid):
+    return bool(re.match("^[a-zA-Z0-9]*$", merchant_oid))
+
 @app.route('/create_payment', methods=['POST'])
 def create_payment():
     data = request.json
@@ -52,6 +56,10 @@ def create_payment():
     user_address = data.get('user_address')
     user_phone = data.get('user_phone')
     merchant_oid = generate_merchant_oid()  # Güncellenmiş benzersiz sipariş numarası
+
+    # `merchant_oid`'u doğrula
+    if not validate_merchant_oid(merchant_oid):
+        return jsonify({'error': 'Invalid merchant_oid'}), 400
 
     # Sepet içeriği
     user_basket = base64.b64encode(json.dumps([['Ürün Adı', payment_amount, 1]]).encode())
