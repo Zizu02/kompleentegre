@@ -5,18 +5,18 @@ import hashlib
 import requests
 import json
 import os
-import time  # Zamanı kullanarak benzersiz sipariş numarası oluşturacağız
-from flask_cors import CORS
+import time
+from flask_cors import CORS  # CORS'ü import et
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "https://sapphire-algae-9ajt.squarespace.com"}})  # Belirli bir domain için CORS izni
+CORS(app)  # Tüm kaynaklar için izin verir
 
 # PayTR için gerekli bilgiler
 MERCHANT_ID = '492579'
 MERCHANT_KEY = b'Gxm6ww6x6hbPJmg6'
 MERCHANT_SALT = b'RbuMk9kDZ2bCa5K2'
 
-# PayTR Token oluşturma
+# Token oluşturma fonksiyonu
 def create_paytr_token(merchant_id, merchant_key, merchant_salt, user_ip, merchant_oid, email, payment_amount, user_basket, no_installment, max_installment, currency, test_mode):
     # Token hesaplamadan önceki tüm verileri print ile kontrol edelim
     print(f"merchant_id: {merchant_id}")
@@ -38,7 +38,6 @@ def create_paytr_token(merchant_id, merchant_key, merchant_salt, user_ip, mercha
     token = base64.b64encode(hmac.new(merchant_key, hash_str.encode() + merchant_salt, hashlib.sha256).digest())
     print(f"Generated token: {token}")
     return token
-
 
 @app.route('/create_payment', methods=['POST'])
 def create_payment():
@@ -95,8 +94,6 @@ def create_payment():
     else:
         return jsonify(res)
 
-
-# PayTR'den gelen ödeme sonucunu işlemek için callback fonksiyonu
 @app.route('/paytr_callback', methods=['POST'])
 def paytr_callback():
     if request.method == 'POST':
@@ -127,8 +124,6 @@ def paytr_callback():
         # Bildirimin alındığını PayTR sistemine bildir.
         return 'OK', 200
 
-
-# Kök URL için bir rota ekleyelim
 @app.route('/')
 def home():
     return 'Hello, Render! Uygulama çalışıyor.'
