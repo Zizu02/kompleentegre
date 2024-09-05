@@ -83,7 +83,7 @@ def create_payment():
 
     # PayTR'ye istek gönder
     response = requests.post('https://www.paytr.com/odeme/api/get-token', data=params)
-    
+
     # Gelen yanıtı logla
     print("Gelen Yanıt:", response.text)
 
@@ -93,6 +93,7 @@ def create_payment():
         return jsonify({'token': res['token']})
     else:
         return jsonify(res)
+
 
 @app.route('/paytr_callback', methods=['POST'])
 def paytr_callback():
