@@ -17,12 +17,25 @@ MERCHANT_SALT = b'RbuMk9kDZ2bCa5K2'
 
 # PayTR Token oluşturma
 def create_paytr_token(merchant_id, merchant_key, merchant_salt, user_ip, merchant_oid, email, payment_amount, user_basket, no_installment, max_installment, currency, test_mode):
-    # Hash string'i oluştur
+    # Token hesaplamadan önceki tüm verileri print ile kontrol edelim
+    print(f"merchant_id: {merchant_id}")
+    print(f"user_ip: {user_ip}")
+    print(f"merchant_oid: {merchant_oid}")
+    print(f"email: {email}")
+    print(f"payment_amount: {payment_amount}")
+    print(f"user_basket: {user_basket.decode()}")
+    print(f"no_installment: {no_installment}")
+    print(f"max_installment: {max_installment}")
+    print(f"currency: {currency}")
+    print(f"test_mode: {test_mode}")
+
     hash_str = f"{merchant_id}{user_ip}{merchant_oid}{email}{payment_amount}{user_basket.decode()}{no_installment}{max_installment}{currency}{test_mode}"
-    print("Hash String:", hash_str)  # Hash string'i kontrol edin
+    print(f"Hash string: {hash_str}")
+
     token = base64.b64encode(hmac.new(merchant_key, hash_str.encode() + merchant_salt, hashlib.sha256).digest())
-    print("PayTR Token:", token)  # Token'ı kontrol edin
+    print(f"Generated token: {token}")
     return token
+
 
 @app.route('/create_payment', methods=['POST'])
 def create_payment():
