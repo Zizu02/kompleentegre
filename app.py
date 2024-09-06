@@ -109,7 +109,7 @@ def create_payment():
 @app.route('/paytr_callback', methods=['POST'])
 def paytr_callback():
     if request.method == 'POST':
-        post_data = request.form
+        post_data = request.json  # JSON formatını kontrol edin
 
         # POST değerlerini al
         merchant_oid = post_data.get('merchant_oid')
@@ -119,10 +119,11 @@ def paytr_callback():
 
         # Hash doğrulama için hash stringi oluştur
         hash_str = f"{merchant_oid}{MERCHANT_SALT.decode()}{status}{total_amount}"
-        generated_hash = base64.b64encode(hmac.new(MERCHANT_KEY, hash_str.encode(), hashlib.sha256).digest())
+        generated_hash = base64.b64encode(hmac.new(MERCHANT_KEY, hash_str.encode(), hashlib.sha256).digest()).decode()
 
-        # Hash'i karşılaştır, PayTR'den gelen hash ile oluşturduğumuz hash aynı mı?
-        if generated_hash != received_hash.encode():
+        # Gelen hash ile oluşturduğumuz hash'i karşılaştır
+        if generated_hash != received_hash:
+            print(f"Hash eşleşmedi: Oluşturulan: {generated_hash}, Gelen: {received_hash}")
             return 'PAYTR notification failed: Invalid hash', 400
 
         # Siparişin durumunu kontrol et ve başarı durumuna göre işlem yap
@@ -133,7 +134,7 @@ def paytr_callback():
             # Ödeme başarısız, burada iptal işlemi yapın
             print(f"Sipariş {merchant_oid} ödemesi başarısız oldu.")
 
-        # Bildirimin alındığını PayTR sistemine bildir.
+        # Bildirimin alındığını PayTR sistemine bildir
         return 'OK', 200
 
 @app.route('/')
