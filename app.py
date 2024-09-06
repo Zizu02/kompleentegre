@@ -103,6 +103,7 @@ def create_payment():
 @app.route('/paytr_callback', methods=['POST'])
 def paytr_callback():
     post_data = request.json
+    app.logger.info(f'Received data: {post_data}')  # Gelen veriyi loglayın
 
     merchant_oid = post_data.get('merchant_oid')
     status = post_data.get('status')
@@ -113,6 +114,7 @@ def paytr_callback():
     generated_hash = base64.b64encode(hmac.new(MERCHANT_KEY, hash_str.encode(), hashlib.sha256).digest()).decode()
 
     if generated_hash != received_hash:
+        app.logger.error(f'Hash mismatch: expected {generated_hash}, got {received_hash}')
         return 'PAYTR notification failed: Invalid hash', 400
 
     conn = get_db_connection()
@@ -124,9 +126,9 @@ def paytr_callback():
     conn.close()
 
     if status == 'success':
-        print(f"Sipariş {merchant_oid} başarılı bir şekilde ödendi.")
+        app.logger.info(f"Sipariş {merchant_oid} başarılı bir şekilde ödendi.")
     else:
-        print(f"Sipariş {merchant_oid} ödemesi başarısız oldu.")
+        app.logger.info(f"Sipariş {merchant_oid} ödemesi başarısız oldu.")
 
     return 'OK', 200
 
@@ -183,3 +185,4 @@ if __name__ == '__main__':
     
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+
