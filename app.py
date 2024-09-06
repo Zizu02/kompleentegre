@@ -11,7 +11,7 @@ import re
 from flask_cors import CORS  # CORS'ü import et
 
 app = Flask(__name__)
-CORS(app, resources={r"/create_payment": {"origins": "https://sapphire-algae-9ajt.squarespace.com"}})  # Belirli bir endpoint için CORS izni
+CORS(app, resources={r"/*": {"origins": "*"}})  # Tüm kökenler için CORS izni (Geliştirme aşamasında olabilir, üretim için daha kısıtlı bir yaklaşım tercih edilir)
 
 # PayTR için gerekli bilgiler
 MERCHANT_ID = '492579'
@@ -144,3 +144,4 @@ def home():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))  # Render'den gelen portu al
     app.run(host='0.0.0.0', port=port, debug=True)
+
