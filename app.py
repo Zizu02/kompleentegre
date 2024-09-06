@@ -11,7 +11,7 @@ import re
 from flask_cors import CORS  # CORS'ü import et
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "https://sapphire-algae-9ajt.squarespace.com"}})  # Belirli bir domain için CORS izni
+CORS(app, resources={r"/create_payment": {"origins": "https://sapphire-algae-9ajt.squarespace.com"}})  # Belirli bir endpoint için CORS izni
 
 # PayTR için gerekli bilgiler
 MERCHANT_ID = '492579'
