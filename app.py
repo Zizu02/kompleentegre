@@ -105,10 +105,11 @@ def paytr_callback():
     print(f"Headers: {request.headers}")
     print(f"Body: {request.data}")
 
-    post_data = request.form
+    post_data = request.json
 
-    if not post_data:
-        return jsonify({'error': 'No data received'}), 400
+    if post_data is None:
+        print("No data received")
+        return 'PAYTR notification failed: No data received', 400
 
     merchant_oid = post_data.get('merchant_oid')
     status = post_data.get('status')
@@ -119,7 +120,7 @@ def paytr_callback():
     generated_hash = base64.b64encode(hmac.new(MERCHANT_KEY, hash_str.encode(), hashlib.sha256).digest()).decode()
 
     if generated_hash != received_hash:
-        return jsonify({'error': 'Invalid hash'}), 400
+        return 'PAYTR notification failed: Invalid hash', 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
