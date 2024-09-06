@@ -102,6 +102,7 @@ def create_payment():
 
 @app.route('/paytr_callback', methods=['POST'])
 def paytr_callback():
+    print(f"Request Method: {request.method}")
     print(f"Headers: {request.headers}")
     print(f"Body: {request.data}")
 
