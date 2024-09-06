@@ -102,41 +102,26 @@ def create_payment():
 
 @app.route('/paytr_callback', methods=['POST'])
 def paytr_callback():
-    # Gelen istek başlıklarını ve verileri logla
     print(f"Headers: {request.headers}")
     print(f"Body: {request.data}")
 
-    # JSON verisini al
     post_data = request.json
-    print(f"Post Data: {post_data}")
 
-    # JSON verisi gelmemişse hata döndür
     if post_data is None:
         print("No data received")
         return 'PAYTR notification failed: No data received', 400
 
-    # Gelen verilerden gerekli bilgileri al
     merchant_oid = post_data.get('merchant_oid')
     status = post_data.get('status')
     total_amount = post_data.get('total_amount')
     received_hash = post_data.get('hash')
 
-    if not all([merchant_oid, status, total_amount, received_hash]):
-        print("Missing one or more required fields")
-        return 'PAYTR notification failed: Missing required fields', 400
-
-    # Hash hesapla
     hash_str = f"{merchant_oid}{MERCHANT_SALT.decode()}{status}{total_amount}"
     generated_hash = base64.b64encode(hmac.new(MERCHANT_KEY, hash_str.encode(), hashlib.sha256).digest()).decode()
-    print(f"Generated Hash: {generated_hash}")
-    print(f"Received Hash: {received_hash}")
 
-    # Hash doğrulamasını yap
     if generated_hash != received_hash:
-        print("Hash mismatch")
         return 'PAYTR notification failed: Invalid hash', 400
 
-    # Veritabanını güncelle
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -144,7 +129,6 @@ def paytr_callback():
     conn.commit()
     conn.close()
 
-    # Duruma göre mesaj yaz
     if status == 'success':
         print(f"Sipariş {merchant_oid} başarılı bir şekilde ödendi.")
     else:
