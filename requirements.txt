@@ -6,3 +6,4 @@ Click==8.0.0
 requests==2.25.1
 MarkupSafe==2.0.1
 flask-cors
+SQLAlchemy==1.4.47
