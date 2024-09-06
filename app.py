@@ -100,7 +100,7 @@ def create_payment():
     else:
         return jsonify(res)
 
-@app.route('/paytr_callback', methods=['POST', 'GET'])
+@app.route('/paytr_callback', methods=['POST'])
 def paytr_callback():
     print(f"Headers: {request.headers}")
     print(f"Body: {request.data}")
