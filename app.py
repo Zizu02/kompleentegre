@@ -137,6 +137,7 @@ def paytr_callback():
     return 'OK', 200
 
 
+
 @app.route('/paytr_status', methods=['POST'])
 def paytr_status():
     data = request.json
