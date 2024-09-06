@@ -8,6 +8,7 @@ import os
 import random
 import string
 import re
+import sqlite3
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -17,6 +18,12 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 MERCHANT_ID = '492579'
 MERCHANT_KEY = b'Gxm6ww6x6hbPJmg6'
 MERCHANT_SALT = b'RbuMk9kDZ2bCa5K2'
+
+# Veritabanı bağlantısı
+def get_db_connection():
+    conn = sqlite3.connect('payments.db')
+    conn.row_factory = sqlite3.Row
+    return conn
 
 # Token oluşturma fonksiyonu
 def create_paytr_token(merchant_id, merchant_key, merchant_salt, user_ip, merchant_oid, email, payment_amount, user_basket, no_installment, max_installment, currency, test_mode):
@@ -42,6 +49,22 @@ def create_payment():
 
     if not validate_merchant_oid(merchant_oid):
         return jsonify({'error': 'Invalid merchant_oid'}), 400
+
+    # Veritabanı bağlantısını aç
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # İşlem kimliğinin daha önce kullanılıp kullanılmadığını kontrol et
+    cursor.execute('SELECT * FROM payments WHERE request_id = ?', (merchant_oid,))
+    existing_payment = cursor.fetchone()
+    if existing_payment:
+        conn.close()
+        return jsonify({'error': 'Duplicate request'}), 400
+    
+    # İşlem kimliğini veritabanına ekle
+    cursor.execute('INSERT INTO payments (request_id, status) VALUES (?, ?)', (merchant_oid, 'pending'))
+    conn.commit()
+    conn.close()
 
     user_basket = base64.b64encode(json.dumps([['Ürün Adı', payment_amount, 1]]).encode())
     params = {
@@ -92,6 +115,14 @@ def paytr_callback():
     if generated_hash != received_hash:
         return 'PAYTR notification failed: Invalid hash', 400
 
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # İşlem kimliğini güncelle
+    cursor.execute('UPDATE payments SET status = ? WHERE request_id = ?', (status, merchant_oid))
+    conn.commit()
+    conn.close()
+
     if status == 'success':
         print(f"Sipariş {merchant_oid} başarılı bir şekilde ödendi.")
     else:
@@ -108,5 +139,12 @@ def home():
     return 'Hello, Render! Uygulama çalışıyor.'
 
 if __name__ == '__main__':
+    # Veritabanı tablo oluşturma
+    conn = get_db_connection()
+    conn.execute('''CREATE TABLE IF NOT EXISTS payments
+                    (request_id TEXT PRIMARY KEY, status TEXT)''')
+    conn.close()
+    
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+
