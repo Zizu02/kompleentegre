@@ -11,7 +11,7 @@ import re
 from flask_cors import CORS  # CORS'ü import et
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # Tüm kökenler için CORS izni (Geliştirme aşamasında olabilir, üretim için daha kısıtlı bir yaklaşım tercih edilir)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Tüm kökenler için CORS izni
 
 # PayTR için gerekli bilgiler
 MERCHANT_ID = '492579'
@@ -20,7 +20,6 @@ MERCHANT_SALT = b'RbuMk9kDZ2bCa5K2'
 
 # Token oluşturma fonksiyonu
 def create_paytr_token(merchant_id, merchant_key, merchant_salt, user_ip, merchant_oid, email, payment_amount, user_basket, no_installment, max_installment, currency, test_mode):
-    # Token hesaplamadan önceki tüm verileri print ile kontrol edelim
     print(f"merchant_id: {merchant_id}")
     print(f"user_ip: {user_ip}")
     print(f"merchant_oid: {merchant_oid}")
@@ -137,13 +136,13 @@ def paytr_callback():
         # Bildirimin alındığını PayTR sistemine bildir
         return 'OK', 200
 
-@app.route('/')
-def home():
-    return 'Hello, Render! Uygulama çalışıyor.'
-
 @app.route('/', methods=['POST'])
 def root_post():
     return 'POST request to / is not allowed', 405
+
+@app.route('/')
+def home():
+    return 'Hello, Render! Uygulama çalışıyor.'
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))  # Render'den gelen portu al
