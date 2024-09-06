@@ -100,15 +100,16 @@ def create_payment():
     else:
         return jsonify(res)
 
-@app.route('/paytr_callback', methods=['POST', 'GET'])
+@app.route('/paytr_callback', methods=['POST'])
 def paytr_callback():
     print(f"Request Method: {request.method}")
     print(f"Headers: {request.headers}")
     print(f"Body: {request.data}")
 
-    post_data = request.json
+    # Verileri form olarak al
+    post_data = request.form
 
-    if post_data is None:
+    if not post_data:
         print("No data received")
         return 'PAYTR notification failed: No data received', 400
 
@@ -117,18 +118,28 @@ def paytr_callback():
     total_amount = post_data.get('total_amount')
     received_hash = post_data.get('hash')
 
+    if not all([merchant_oid, status, total_amount, received_hash]):
+        print("Incomplete data received")
+        return 'PAYTR notification failed: Incomplete data', 400
+
+    # Hash doğrulama
     hash_str = f"{merchant_oid}{MERCHANT_SALT.decode()}{status}{total_amount}"
     generated_hash = base64.b64encode(hmac.new(MERCHANT_KEY, hash_str.encode(), hashlib.sha256).digest()).decode()
 
     if generated_hash != received_hash:
         return 'PAYTR notification failed: Invalid hash', 400
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('UPDATE payments SET status = ? WHERE request_id = ?', (status, merchant_oid))
-    conn.commit()
-    conn.close()
+    # Veritabanı işlemleri
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('UPDATE payments SET status = ? WHERE request_id = ?', (status, merchant_oid))
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return 'PAYTR notification failed: Database error', 500
+    finally:
+        conn.close()
 
     if status == 'success':
         print(f"Sipariş {merchant_oid} başarılı bir şekilde ödendi.")
@@ -136,6 +147,7 @@ def paytr_callback():
         print(f"Sipariş {merchant_oid} ödemesi başarısız oldu.")
 
     return 'OK', 200
+
 
 @app.route('/paytr_status', methods=['POST'])
 def paytr_status():
