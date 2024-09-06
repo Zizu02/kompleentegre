@@ -104,53 +104,53 @@ def create_payment():
 def paytr_callback():
     print(f"Request Method: {request.method}")
     print(f"Headers: {request.headers}")
-    print(f"Body: {request.data}")
+    print(f"Body: {request.data.decode()}")  # request.data'nın decode edilmesi gerekebilir
 
-    # GET istekleri için sadece bir yanıt döndür
     if request.method == 'GET':
         return 'GET method is not supported for this endpoint', 405
 
-    # POST istekleri için form verilerini al
-    post_data = request.form
+    if request.method == 'POST':
+        post_data = request.form
 
-    if not post_data:
-        print("No data received")
-        return 'PAYTR notification failed: No data received', 400
+        if not post_data:
+            print("No data received")
+            return 'PAYTR notification failed: No data received', 400
 
-    merchant_oid = post_data.get('merchant_oid')
-    status = post_data.get('status')
-    total_amount = post_data.get('total_amount')
-    received_hash = post_data.get('hash')
+        merchant_oid = post_data.get('merchant_oid')
+        status = post_data.get('status')
+        total_amount = post_data.get('total_amount')
+        received_hash = post_data.get('hash')
 
-    if not all([merchant_oid, status, total_amount, received_hash]):
-        print("Incomplete data received")
-        return 'PAYTR notification failed: Incomplete data', 400
+        if not all([merchant_oid, status, total_amount, received_hash]):
+            print("Incomplete data received")
+            return 'PAYTR notification failed: Incomplete data', 400
 
-    # Hash doğrulama
-    hash_str = f"{merchant_oid}{MERCHANT_SALT.decode()}{status}{total_amount}"
-    generated_hash = base64.b64encode(hmac.new(MERCHANT_KEY, hash_str.encode(), hashlib.sha256).digest()).decode()
+        # Hash doğrulama
+        hash_str = f"{merchant_oid}{MERCHANT_SALT.decode()}{status}{total_amount}"
+        generated_hash = base64.b64encode(hmac.new(MERCHANT_KEY, hash_str.encode(), hashlib.sha256).digest()).decode()
 
-    if generated_hash != received_hash:
-        return 'PAYTR notification failed: Invalid hash', 400
+        if generated_hash != received_hash:
+            return 'PAYTR notification failed: Invalid hash', 400
 
-    # Veritabanı işlemleri
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('UPDATE payments SET status = ? WHERE request_id = ?', (status, merchant_oid))
-        conn.commit()
-    except sqlite3.Error as e:
-        print(f"Database error: {e}")
-        return 'PAYTR notification failed: Database error', 500
-    finally:
-        conn.close()
+        # Veritabanı işlemleri
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute('UPDATE payments SET status = ? WHERE request_id = ?', (status, merchant_oid))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
+            return 'PAYTR notification failed: Database error', 500
+        finally:
+            conn.close()
 
-    if status == 'success':
-        print(f"Sipariş {merchant_oid} başarılı bir şekilde ödendi.")
-    else:
-        print(f"Sipariş {merchant_oid} ödemesi başarısız oldu.")
+        if status == 'success':
+            print(f"Sipariş {merchant_oid} başarılı bir şekilde ödendi.")
+        else:
+            print(f"Sipariş {merchant_oid} ödemesi başarısız oldu.")
 
-    return 'OK', 200
+        return 'OK', 200
+
 
 
 
