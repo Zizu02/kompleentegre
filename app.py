@@ -100,13 +100,17 @@ def create_payment():
     else:
         return jsonify(res)
 
-@app.route('/paytr_callback', methods=['POST'])
+@app.route('/paytr_callback', methods=['POST', 'GET'])
 def paytr_callback():
     print(f"Request Method: {request.method}")
     print(f"Headers: {request.headers}")
     print(f"Body: {request.data}")
 
-    # Verileri form olarak al
+    # GET istekleri için sadece bir yanıt döndür
+    if request.method == 'GET':
+        return 'GET method is not supported for this endpoint', 405
+
+    # POST istekleri için form verilerini al
     post_data = request.form
 
     if not post_data:
@@ -147,6 +151,7 @@ def paytr_callback():
         print(f"Sipariş {merchant_oid} ödemesi başarısız oldu.")
 
     return 'OK', 200
+
 
 
 @app.route('/paytr_status', methods=['POST'])
