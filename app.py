@@ -121,6 +121,10 @@ def paytr_callback():
     total_amount = post_data.get('total_amount')
     received_hash = post_data.get('hash')
 
+    if not all([merchant_oid, status, total_amount, received_hash]):
+        print("Missing one or more required fields")
+        return 'PAYTR notification failed: Missing required fields', 400
+
     # Hash hesapla
     hash_str = f"{merchant_oid}{MERCHANT_SALT.decode()}{status}{total_amount}"
     generated_hash = base64.b64encode(hmac.new(MERCHANT_KEY, hash_str.encode(), hashlib.sha256).digest()).decode()
@@ -129,6 +133,7 @@ def paytr_callback():
 
     # Hash doğrulamasını yap
     if generated_hash != received_hash:
+        print("Hash mismatch")
         return 'PAYTR notification failed: Invalid hash', 400
 
     # Veritabanını güncelle
@@ -146,6 +151,7 @@ def paytr_callback():
         print(f"Sipariş {merchant_oid} ödemesi başarısız oldu.")
 
     return 'OK', 200
+
 
 
 
