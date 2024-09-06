@@ -130,6 +130,42 @@ def paytr_callback():
 
     return 'OK', 200
 
+@app.route('/paytr_status', methods=['POST'])
+def paytr_status():
+    data = request.json
+    merchant_oid = data.get('merchant_oid')
+    
+    # Token hesaplama
+    hash_str = f"{MERCHANT_ID}{merchant_oid}{MERCHANT_SALT.decode()}"
+    paytr_token = base64.b64encode(hmac.new(MERCHANT_KEY, hash_str.encode(), hashlib.sha256).digest()).decode()
+
+    params = {
+        'merchant_id': MERCHANT_ID,
+        'merchant_oid': merchant_oid,
+        'paytr_token': paytr_token
+    }
+
+    response = requests.post('https://www.paytr.com/odeme/durum-sorgu', data=params)
+    result = response.json()
+
+    if result['status'] == 'success':
+        payment_amount = result.get('payment_amount', '') + result.get('currency', '')
+        payment_total = result.get('payment_total', '') + result.get('currency', '')
+        returns = result.get('returns', [])
+
+        return jsonify({
+            'status': result['status'],
+            'payment_amount': payment_amount,
+            'payment_total': payment_total,
+            'returns': returns
+        })
+    else:
+        return jsonify({
+            'status': result['status'],
+            'error_number': result.get('err_no'),
+            'error_message': result.get('err_msg')
+        }), 400
+
 @app.route('/', methods=['POST'])
 def post_ok_response():
     return 'OK', 200
@@ -147,4 +183,3 @@ if __name__ == '__main__':
     
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
-
