@@ -102,8 +102,14 @@ def create_payment():
 
 @app.route('/paytr_callback', methods=['POST'])
 def paytr_callback():
+    print(f"Headers: {request.headers}")
+    print(f"Body: {request.data}")
+
     post_data = request.json
-    app.logger.info(f'Received data: {post_data}')  # Gelen veriyi loglayın
+
+    if post_data is None:
+        print("No data received")
+        return 'PAYTR notification failed: No data received', 400
 
     merchant_oid = post_data.get('merchant_oid')
     status = post_data.get('status')
@@ -114,23 +120,22 @@ def paytr_callback():
     generated_hash = base64.b64encode(hmac.new(MERCHANT_KEY, hash_str.encode(), hashlib.sha256).digest()).decode()
 
     if generated_hash != received_hash:
-        app.logger.error(f'Hash mismatch: expected {generated_hash}, got {received_hash}')
         return 'PAYTR notification failed: Invalid hash', 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # İşlem kimliğini güncelle
     cursor.execute('UPDATE payments SET status = ? WHERE request_id = ?', (status, merchant_oid))
     conn.commit()
     conn.close()
 
     if status == 'success':
-        app.logger.info(f"Sipariş {merchant_oid} başarılı bir şekilde ödendi.")
+        print(f"Sipariş {merchant_oid} başarılı bir şekilde ödendi.")
     else:
-        app.logger.info(f"Sipariş {merchant_oid} ödemesi başarısız oldu.")
+        print(f"Sipariş {merchant_oid} ödemesi başarısız oldu.")
 
     return 'OK', 200
+
 
 @app.route('/paytr_status', methods=['POST'])
 def paytr_status():
